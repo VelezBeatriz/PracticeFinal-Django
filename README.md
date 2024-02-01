@@ -241,120 +241,137 @@ LANGUAGE_CODE = 'es-EU'
 
 Esto establece el idioma a español europeo. Ajusta el código de idioma según tus preferencias.
 
+## Video 9
 
-Video 9
 
-Cuando estes en local recuerda que esta opcion debe ser cierta:
+Al trabajar en local, asegúrate de que la siguiente opción esté activada en tu archivo `settings.py`:
+```python
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
+```
 
-Al subirlo a produccion recuerda cambiar esto.
+Al subirlo a producción, recuerda cambiar esto.
 
-Imagenes y media
-Crea una carpeta media para enviar todas las imagenes en cuestion a este directorio. Especifica en settings:
+### Imágenes y Media
+
+Crea una carpeta `media` para enviar todas las imágenes a este directorio. Especifica en `settings.py`:
+```python
 import os
 MEDIA_URL = '/media/'
-MEDIA_ROOT=os.path.join(BASE_DIR, 'media')
-y en el modelo especificar la ruta:
-    imagen=models.ImageField(upload_to='servicios')
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+```
+En el modelo especifica la ruta:
+```python
+imagen = models.ImageField(upload_to='servicios')
+```
 
+Pero la fotografía sigue sin cargarse. Para solucionarlo:
 
-Pero la fotogrtafia sigue sin cargare, para ello haremos:
+Cambiarás las URLs generales por:
 
-
-Cambiaras las urls generales por:
+```python
 from django.urls import path
 from ProyectoWebappVelezBeatriz import views
 # Importar las rutas de media
 from django.conf import settings
 from django.conf.urls.static import static
 
-# Sin la url de admin
+# Sin la URL de admin
 urlpatterns = [
     path('', views.home, name="Home"),
     path('servicios', views.servicios, name="Servicios"),
     path('tienda', views.tienda, name="Tienda"),
     path('blog', views.blog, name="Blog"),
     path('contacto', views.contacto, name="Contacto"),
-
 ]
 
-
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+```
+
+## Video 10
 
 
-Video 10
-
-en views vamos a :
+En `views`, vamos a:
+```python
 from servicios.models import Servicio
+```
 para obtener los datos y poder añadirlos en la plantilla correspondiente.
 
-importaremos todos los objetos y que nos devuelva la plantilla y los servicios importados
+Importaremos todos los objetos y que nos devuelva la plantilla y los servicios importados:
 
+```python
 def servicios(request):
-
-    servicios=Servicio.objects.all()
+    servicios = Servicio.objects.all()
     return render(request, "ProyectoWebAppVelezBeatriz/servicios.html", {"servicios":servicios})
-Finalmente podremso crear el blockcontent de servcios:
+```
+
+Finalmente, podremos crear el bloque de contenido de servicios:
+
+```html
 {% block content %}
-
     {% for servicio in servicios %}
-
-    <div>
-        <p>
-            <h2 class="text-light">{{servicio.titulo}}</h2>
-            <p class="text-light">{{servicio.contenido}}</p>
-            <p><img src="media/{{servicio.imagen}}" alt="{{servicio.titulo}}"></p>
-        </p>
-    </div>
+        <div>
+            <p>
+                <h2 class="text-light">{{servicio.titulo}}</h2>
+                <p class="text-light">{{servicio.contenido}}</p>
+                <p><img src="media/{{servicio.imagen}}" alt="{{servicio.titulo}}"></p>
+            </p>
+        </div>
     {% endfor %}
+{% endblock %}
+```
 
-Video 11
+## Video 11
 
-Migraremos la plantilla de servicios a la app correspondiente asi que nos tocara cambiar tadas las vistas, urls etc para poder visualizar correctamente la pagina:
 
-Declaramos urls en servicios, eliminamos el servicio de donde no combiene.
-en views de servicios declaramos:
+
+Migraremos la plantilla de servicios a la app correspondiente, así que nos tocará cambiar todas las vistas, URLs, etc., para poder visualizar correctamente la página.
+
+Declaramos URLs en servicios, eliminamos el servicio de donde no conviene.
+En `views` de servicios declaramos:
+```python
 from django.shortcuts import render
 from servicios.models import Servicio
 
-# Create your views here.
-
 def servicios(request):
-
-    servicios=Servicio.objects.all()
+    servicios = Servicio.objects.all()
     return render(request, "servicios/servicios.html", {"servicios":servicios})
+```
 
-en url servicios declaramos:
+En la URL de servicios declaramos:
+```python
 from django.urls import path
 from . import views
 # Importar las rutas de media
 from django.conf import settings
 from django.conf.urls.static import static
 
-# Sin la url de admin
+# Sin la URL de admin
 urlpatterns = [
     path('', views.servicios, name="Servicios"),
 ]
 
+urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+```
 
-urlpatterns+=static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+Y en la URL general declaramos:
+```python
+path('servicios/', include('servicios.urls')),
+```
 
-y en url general declaramos:
-    path('servicios/', include('servicios.urls')),
+## Video 12
+
+Modificaremos los templates de servicios al gusto.
 
 
-video 12
+## Video 13
 
-Modificaremos los templates de servicios al gusto
 
-Video 13
+Vamos a crear el blog. Las entradas tendrán categorías, títulos, contenido y fotografías. Para ello, seguiremos los mismos pasos que hemos hecho en anteriores videos.
 
-Vamos a crear el blog
-Las entradas tendran categorias, titulos, contenido y fotografias para ello seguiremos los mismos pasos que hemos hecho ya en anteriores videos
+Recuerda que este modelo trabaja con ForeignKey. Aquí tienes un ejemplo:
 
-Recuerda que este modelo trabaja con FK, aqui tienes un ejemplo:
-    
+```python
 class Post(models.Model):
     titulo = models.CharField(max_length=50)
     contenido = models.CharField(max_length=50)
@@ -362,6 +379,22 @@ class Post(models.Model):
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now_add=True)
     autor = models.ForeignKey(User, on_delete=models.CASCADE)
-    categorias=models.ManyToManyField(Categoria)
+    categorias = models.ManyToManyField(Categoria)
+```
 
-No te olvides declarar el modelo en admin.py para poder administrar el blog desde administracion de Django
+No te olvides declarar el modelo en `admin.py` para poder administrar el blog desde la administración de Django.
+
+
+## Video 14
+
+En esta sección, hemos creado los posts de la misma forma que creamos el template de servicios. Recuerda que hay que declarar los modelos correspondientes en `admin.py`.
+
+## Video 15
+
+Vamos a visualizar el post en sí, pero vamos a añadir un bucle que lea las categorías. Recuerda que, aparte del bucle, tendrás que resetear la query de lectura. Fíjate en el proyecto cómo lo hemos hecho. Podrás verlo en el template de `blog.html`.
+
+
+## Video 16
+
+Hemos creado las categorías creando una vista de categorías donde almacenamos el ID de la categoría seleccionada, los posts filtrados con la función `filter`, y mostrando las categorías en cuestión.
+
